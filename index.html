@@ -158,11 +158,12 @@
                             <li>Виды сборок мусора</li>
                             <li>GC лог</li>
                             <li>JVM Arguments</li>
+                            <li>32bit/64bit</li>
                             <li>OutOfMemoryError</li>
                             <li>Strong/Weak References</li>
                             <li>Metaspace</li>
-                            <li>Native memory</li>
-                            <li>GCEasy</li>
+                            <li>Native memory</li>                            
+                            <li>GCEasy / GCViewer</li>
                             <li>VisualVM</li>
                             <li>Eclipse Memory Analyzer</li>
                         </ul>
@@ -180,21 +181,106 @@
                         <li>Minor GC</li>
                         <li>FullGC</li>
                     </ul>
+                    <img src="img/java_memory_regions.jpg"/>
                 </section>
 
                 <section>
                     <h1>GC лог</h1>
-<pre style="width:auto; max-height:auto;"><code data-trim class="java">
-</code></pre>
+<pre style="width:auto; max-height:auto; font-size: 14pt;">
+Java HotSpot(TM) 64-Bit Server VM (25.60-b23) for linux-amd64 JRE (1.8.0_60-b27)
+Memory: 4k page, physical 4046656k(3469764k free), swap 131068k(131068k free)
+CommandLine flags: -XX:InitialHeapSize=2684354560 -XX:+ManagementServer -XX:MaxHeapSize=2684354560 
+-XX:MaxMetaspaceSize=402653184 -XX:+PrintGC -XX:+PrintGCDateStamps 
+-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:ReservedCodeCacheSize=104857600 -XX:ThreadStackSize=512 
+-XX:-TieredCompilation -XX:+UnlockCommercialFeatures -XX:+UseCompressedClassPointers 
+-XX:+UseCompressedOops -XX:+UseParallelOldGC 
+
+2017-03-31T06:37:04.396+0000: 15.909: [GC (Allocation Failure) 
+[PSYoungGen: 764409K->109038K(551424K)] 
+892078K->304714K(2299392K), 0.1895485 secs] 
+[Times: user=0.22 sys=0.01, real=0.19 secs] 
+
+2017-03-31T06:37:07.514+0000:19.027: [GC (Metadata GC Threshold) 
+[PSYoungGen: 506766K->51971K(494592K)]
+702442K->270793K(2242560K), 0.0514184 secs]
+[Times: user=0.08 sys=0.01, real=0.05 secs] 
+
+2017-03-31T06:37:07.565+0000:19.078: [Full GC (Metadata GC Threshold)
+[PSYoungGen: 51971K->0K(494592K)]
+[ParOldGen: 218821K->72091K(1747968K)]
+270793K->72091K(2242560K), 
+[Metaspace: 20842K->20842K(1069056K)], 0.1548107 secs] 
+[Times: user=0.25 sys=0.01, real=0.16 secs] 
+</pre>
                 </section>
 
                 <section>
                     <h1>JVM Arguments</h1>
-                    <p>-Xloggc:gc.log -XX:+PrintGCDetails</p>
+                    <p>Настройка регионов памяти: Heap
+<pre style="width:auto; max-height:auto;">
+-Xmx1g -Xms100m
+</pre>
+                    </p>
+
+                    <p>Настройка регионов памяти: Metaspace
+<pre style="width:auto; max-height:auto;">
+-XX:MaxMetaspaceSize256 -XX:MetaspaceSize=100M
+</pre>
+                    </p>
+                    <p>Включение логирования сборки мусора
+<pre style="width:auto; max-height:auto;">
+-Xloggc:gc.log -XX:+PrintGCDetails
+</pre>
+                    </p>
                 </section>
 
                 <section>
-                    <h1>Shades of OutOfMemoryError</h1>
+                    <h1>32bit/64bit</h1>
+<pre style="width:auto; max-height:auto;"><code>
+// Dummy Entity representing usual data objects
+    private static class Entity {
+    public String name;
+    public String detail;
+    public Double amount;
+    public Integer age;
+    }
+</code></pre>
+                </section>
+
+                <section>
+                    <h1>32bit/64bit</h1>
+<pre style="width:auto; max-height:auto; font-size: 12pt;"><code>
+// Linked list offers table inserts and helps illustrating the issue by using multiple
+// references per entry
+public static java.util.LinkedList&lt;Entity&gt; entities = 
+new java.util.LinkedList&lt;&gt;();
+
+// This threshold ensures the loop stops before a full GC happens.
+private static final int MB = 1024 * 1024;
+private static final int THRESHOLD = 100 * MB;
+
+public static void main(String[] args) {
+    System.out.println("Total Memory (in bytes): " + Runtime.getRuntime().totalMemory());
+    System.out.println("Free Memory (in bytes): " + Runtime.getRuntime().freeMemory());
+    System.out.println("Max Memory (in bytes): " + Runtime.getRuntime().maxMemory());
+
+    while (true) {
+        appendEntitiesToDataStructure();
+        terminateBeforeFullGCorOOMEcanHappen();
+    }
+}
+</code></pre>
+                </section>
+
+                <section>
+                    <h1>32bit/64bit</h1>
+<pre style="width:auto; max-height:auto;">
+    
+</pre>
+                </section>
+
+                <section>
+                    <h1>3 Shades of OutOfMemoryError</h1>
                     <ul>
                         <li>java.lang.OutOfMemoryError: Java heap space</li>
                         <li>java.lang.OutOfMemoryError: Metaspace</li>
@@ -234,6 +320,10 @@ WeakReference&lt;StringBuilder&gt; weakBuilder =
                 </section>
 
                 <section>
+                    <h1>GCViewer</h1>
+                </section>
+
+                <section>
                     <h1>VisualVM</h1>
                 </section>
 
@@ -249,9 +339,20 @@ WeakReference&lt;StringBuilder&gt; weakBuilder =
                 </section>
 
                 <section>
-                    <h1>Практическая часть</h1>
+                    <h1>Практическая часть</h1>                    
                     <ul>
-                        <li></li>
+                        <li>Twitter</li>
+                        <li>JMeter</li>
+                        <li>Eclipse Memory Analyzer</li>                        
+                    </ul>
+                    <ul>
+                        <li>Запустить twitter выделив ему 256М</li>
+                        <li>Создать нагрузку на приложение (JMeter)</li>
+                        <li>Посмотреть на работу GC в VisualVM</li>
+                    </ul>
+                    <ul>
+                        <li>Открыть heapdump</li>
+                        <li>Указать видимые проблемы</li>
                     </ul>
                 </section>
 
