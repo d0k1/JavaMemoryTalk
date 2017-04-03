@@ -232,6 +232,18 @@ CommandLine flags: -XX:InitialHeapSize=2684354560 -XX:+ManagementServer -XX:MaxH
 -Xloggc:gc.log -XX:+PrintGCDetails
 </pre>
                     </p>
+                    <p>Формирование дампа памяти
+<pre style="width:auto; max-height:auto;">
+-XX:+HeapDumpOnOutOfMemoryError
+</pre>
+                    </p>
+
+                    <p>Размеры "поколений
+<pre style="width:auto; max-height:auto;">
+-XX:NewSize=100m -XX:MaxNewSize=200m
+-XX:NewRatio=3
+</pre>
+                    </p>
                 </section>
 
                 <section>
@@ -293,12 +305,17 @@ Elements created and added to LinkedList: 385481085
                 </section>
 
                 <section>
+                    <h1>Compressed Oops</h1>
+                </section>
+
+                <section>
                     <h1>3 Shades of OutOfMemoryError</h1>
                     <ul>
                         <li>java.lang.OutOfMemoryError: Java heap space</li>
                         <li>java.lang.OutOfMemoryError: Metaspace</li>
                         <li>java.lang.OutOfMemoryError: GC overhead limit exceeded</li>
                     </ul>
+                    <img src="img/java_memory_regions.jpg"/>
                 </section>
 
                 <section>
@@ -330,10 +347,14 @@ WeakReference&lt;StringBuilder&gt; weakBuilder =
 
                 <section>
                     <h1>GCEasy</h1>
+                    <p>Визуализатор gc.log</p>
+                    <a href="http://gceasy.io/">gceasy.io</a>
                 </section>
 
                 <section>
                     <h1>GCViewer</h1>
+                    <p>Анализатор gc.log</p>
+                    <a href="https://github.com/chewiebug/GCViewer">github.com/chewiebug/GCViewer</a>
                 </section>
 
                 <section>
@@ -366,11 +387,12 @@ WeakReference&lt;StringBuilder&gt; weakBuilder =
                         <li>Запустить twitter выделив ему 256М</li>
                         <li>Создать нагрузку на приложение (JMeter)</li>
                         <li>Посмотреть на работу GC в VisualVM</li>
+                        <li>Проанализировать heapdump в Eclipse MAT</li>
                     </ul>
                 </section>
 
                 <section>
-                    <h1>Практическая часть</h1>                                        
+                    <h1>Практическая часть*</h1>                                        
                     <ul>
                         <li>Открыть heapdump</li>
                         <li>Указать видимые проблемы</li>
