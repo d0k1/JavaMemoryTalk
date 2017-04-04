@@ -222,6 +222,16 @@ CommandLine flags: -XX:InitialHeapSize=2684354560 -XX:+ManagementServer -XX:MaxH
 </pre>
                     </p>
 
+                    <p>Размеры "поколений
+<pre style="width:auto; max-height:auto;">
+-XX:NewSize=100m -XX:MaxNewSize=200m
+-XX:NewRatio=3
+</pre>
+                    </p>
+                </section>
+
+                <section>
+                    <h1>JVM Arguments</h1>
                     <p>Настройка регионов памяти: Metaspace
 <pre style="width:auto; max-height:auto;">
 -XX:MaxMetaspaceSize256 -XX:MetaspaceSize=100M
@@ -237,17 +247,20 @@ CommandLine flags: -XX:InitialHeapSize=2684354560 -XX:+ManagementServer -XX:MaxH
 -XX:+HeapDumpOnOutOfMemoryError
 </pre>
                     </p>
-
-                    <p>Размеры "поколений
-<pre style="width:auto; max-height:auto;">
--XX:NewSize=100m -XX:MaxNewSize=200m
--XX:NewRatio=3
-</pre>
-                    </p>
                 </section>
 
                 <section>
-                    <h1>32bit/64bit</h1>
+                    <h1>3 Shades of OutOfMemoryError</h1>
+                    <ul>
+                        <li>java.lang.OutOfMemoryError: Java heap space</li>
+                        <li>java.lang.OutOfMemoryError: Metaspace</li>
+                        <li>java.lang.OutOfMemoryError: GC overhead limit exceeded</li>
+                    </ul>
+                    <img src="img/java_memory_regions.jpg"/>
+                </section>
+
+                <section>
+                    <h1>-Xmx32G</h1>
 <pre style="width:auto; max-height:auto;"><code>
 // Dummy Entity representing usual data objects
     private static class Entity {
@@ -260,7 +273,7 @@ CommandLine flags: -XX:InitialHeapSize=2684354560 -XX:+ManagementServer -XX:MaxH
                 </section>
 
                 <section>
-                    <h1>32bit/64bit</h1>
+                    <h1>-Xmx32G</h1>
 <pre style="width:auto; max-height:auto; font-size: 12pt;"><code>
 // Linked list offers table inserts and helps illustrating the issue by using multiple
 // references per entry
@@ -277,15 +290,15 @@ public static void main(String[] args) {
     System.out.println("Max Memory (in bytes): " + Runtime.getRuntime().maxMemory());
 
     while (true) {
-        appendEntitiesToDataStructure();
-        terminateBeforeFullGCorOOMEcanHappen();
+        entities.add(new Entity());
+        System.out.println("entities.size() = "+entities.size());
     }
 }
 </code></pre>
                 </section>
 
                 <section>
-                    <h1>32bit/64bit</h1>
+                    <h1>-Xmx32G</h1>
 <pre style="width:auto; max-height:auto;">
     java -Xms31g -Xmx31g -Xmn50m Memory
     java -Xms32g -Xmx32g -Xmn50m Memory    
@@ -293,29 +306,27 @@ public static void main(String[] args) {
                 </section>
 
                 <section>
-                    <h1>32bit/64bit</h1>
+                    <h1>-Xmx32G</h1>
 <pre style="width:auto; max-height:auto;">
 java -Xms31g -Xmx31g -Xmn50m Memory
-Elements created and added to LinkedList: 587889429 
+entities.size() = 587889429 
 </pre>
 <pre style="width:auto; max-height:auto;">
 java -Xms32g -Xmx32g -Xmn50m Memory
-Elements created and added to LinkedList: 385481085
+entities.size() = 385481085
 </pre>
                 </section>
 
                 <section>
                     <h1>Compressed Oops</h1>
-                </section>
-
-                <section>
-                    <h1>3 Shades of OutOfMemoryError</h1>
-                    <ul>
-                        <li>java.lang.OutOfMemoryError: Java heap space</li>
-                        <li>java.lang.OutOfMemoryError: Metaspace</li>
-                        <li>java.lang.OutOfMemoryError: GC overhead limit exceeded</li>
-                    </ul>
-                    <img src="img/java_memory_regions.jpg"/>
+                    Сжатые указатели в heap регионе
+<pre style="width:auto; max-height:auto;">
+-XX:+UseCompressedOops
+</pre>
+                    Сжатые указатели в Metaspace
+<pre style="width:auto; max-height:auto;">
+-XX:+UseCompressedClassPointers
+</pre>
                 </section>
 
                 <section>
@@ -339,30 +350,165 @@ WeakReference&lt;StringBuilder&gt; weakBuilder =
 
                 <section>
                     <h1>Metaspace</h1>
+                    <p>java.lang.OutOfMemoryError: Metaspace</p>
+                    <p>Причины:
+                        <ul>
+                            <li>слишком много зависимостей</li>
+                            <li>использование динамических jvm языков (groovy, jruby)</li>
+                        </ul>
+                    </p>
                 </section>
 
                 <section>
                     <h1>Native memory</h1>
+                    <p>Причины:
+                        <ul>
+                            <li>много потоков</li>
+                            <li>незакрытые stream zip</li>
+                            <li>явное использование offheap памяти(MappedByteBuffer/ByteBuffer)</li>
+                        </ul>
+                    </p>
+                </section>
+
+                <section>
+                    <h1>Анализ gc.log</h1>
+<pre style="width:auto; max-height:auto; font-size: 14pt;">
+2017-03-31T11:53:51.508+0300: 3451601,620: [GC (Metadata GC Threshold) 
+[PSYoungGen: 52266K->3757K(3037696K)] 5825099K->5822635K(16669184K), 0,0295066 secs]
+[Times: user=0,00 sys=0,00, real=0,03 secs] 
+
+2017-03-31T11:53:51.538+0300: 3451601,650: [Full GC (Metadata GC Threshold) 
+[PSYoungGen: 3757K->0K(3037696K)] [ParOldGen: 5818878K->5789982K(13631488K)] 
+5822635K->5789982K(16669184K), [Metaspace: 343702K->342987K(1519616K)], 2,5744845 secs] 
+[Times: user=38,51 sys=0,00, real=2,58 secs] 
+
+2017-03-31T11:53:54.113+0300: 3451604,225: [GC (Last ditch collection)
+[PSYoungGen: 0K->0K(2941440K)] 5789982K->5789982K(16572928K), 0,0220191 secs]
+[Times: user=0,29 sys=0,00, real=0,02 secs] 
+
+2017-03-31T11:53:54.135+0300: 3451604,247: [Full GC (Last ditch collection) 
+[PSYoungGen: 0K->0K(2941440K)] [ParOldGen: 5789982K->5785960K(13631488K)]
+5789982K->5785960K(16572928K), [Metaspace: 342987K->342630K(1519616K)], 5,1649435 secs]
+[Times: user=78,75 sys=4,60, real=5,17 secs] 
+
+2017-03-31T11:53:59.353+0300: 3451609,465: [GC (Metadata GC Threshold)
+[PSYoungGen: 37985K->10770K(3038720K)] 5823946K->5796730K(16670208K), 0,0240264 secs]
+[Times: user=0,30 sys=0,05, real=0,02 secs] 
+</pre>
                 </section>
 
                 <section>
                     <h1>GCEasy</h1>
                     <p>Визуализатор gc.log</p>
                     <a href="http://gceasy.io/">gceasy.io</a>
+                    <br/>
+                    <img src="img/Selection_081.png"/>
+                </section>
+
+                <section>
+                    <img src="img/Selection_082.png"/>
+                </section>
+
+                <section>
+                    <img src="img/Selection_083.png"/>
+                </section>
+
+                <section>
+                    <img src="img/Selection_084.png"/>
+                </section>
+
+                <section>
+                    <img src="img/Selection_085.png"/>
+                </section>
+
+                <section>
+                    <img src="img/Selection_086.png"/>
                 </section>
 
                 <section>
                     <h1>GCViewer</h1>
-                    <p>Анализатор gc.log</p>
                     <a href="https://github.com/chewiebug/GCViewer">github.com/chewiebug/GCViewer</a>
+                    <img src="img/Selection_090.png"/>
+                </section>
+
+                <section>
+                    <h1>GCViewer</h1>
+                    <img src="img/Selection_091.png"/>
+                </section>
+
+                <section>
+                    <h1>GCViewer</h1>
+                    <img src="img/Selection_088.png"/>
+                </section>
+
+                <section>
+                    <h1>GCViewer</h1>
+                    <img src="img/Selection_089.png"/>
                 </section>
 
                 <section>
                     <h1>VisualVM</h1>
+                    <img src="img/Selection_087.png"/>
                 </section>
 
                 <section>
-                    <h1>Eclipse Memory Analyzer</h1>
+                    <h1>jcmd</h1>
+                    <p>Выполнение диагностических команд JVM. В случае если JVM еще "жива".
+                    <br/>
+                    <br/>
+                    jcmd &lt;pid&gt; &lt;command&gt;
+                    <br/>
+                    </p>
+                    <p>
+                        Нужные комманды:
+                        <ul>
+                            <li>Thread.print cнять стек потоков</li>
+                            <li>GC.class_stats гистограмма классов в Java Heap</li>
+                            <li>GC.heap_dump снятие дампа памяти</li>
+                            <li>GC.run запуск GC</li>
+                        </ul>
+                    </p>
+                </section>
+
+                <section>
+                    <h1>JMap</h1>
+                    <p>Снятие heap только с достижимыми(живыми) объектами
+<pre style="width:auto; max-height:auto;">jmap -dump:live,format=b,file=/tmp/dump.hprof &lt;pid&gt;</pre>
+                    </p>
+                    <p>Снятие полного дампа со всеми объектами
+<pre style="width:auto; max-height:auto;">jmap -dump:format=b,file=/tmp/dump.hprof &lt;pid&gt;</pre>
+                    </p>
+                </section>
+
+                <section>
+                    <h1>Eclipse Memory Analyzer Tool</h1>
+                    <p>Инструмент анализа дампа памяти JVM</p>
+                    <ul>
+                        <li>Построить отчеты по утечкам</li>
+                        <li>Отобразить состояние потоков</li>
+                        <li>Вывести потребителей heap'а</li>
+                    </ul>
+                </section>
+
+                <section>                    
+                    <h1>Eclipse MAT</h1>      
+                    <img src="img/Selection_093.png"/>
+                </section>
+
+                <section>              
+                    <h1>Eclipse MAT</h1>      
+                    <img src="img/Selection_094.png"/>
+                </section>
+
+                <section>              
+                    <h1>Eclipse MAT</h1>      
+                    <img src="img/Selection_095.png"/>
+                </section>
+
+                <section>              
+                    <h1>Eclipse MAT</h1>      
+                    <img src="img/Selection_098.png"/>
+                    <img src="img/Menu_097.png"/>
                 </section>
 
                 <!--
@@ -385,20 +531,11 @@ WeakReference&lt;StringBuilder&gt; weakBuilder =
                     <h1>Практическая часть</h1>                                        
                     <ul>
                         <li>Запустить twitter выделив ему 256М</li>
-                        <li>Создать нагрузку на приложение (JMeter)</li>
+                        <li>Создать нагрузку на приложение JMeter (<a href="https://koldn.github.io/StressUndSelenium/#/">koldn.github.io/StressUndSelenium/#/</a>)</li>
                         <li>Посмотреть на работу GC в VisualVM</li>
                         <li>Проанализировать heapdump в Eclipse MAT</li>
                     </ul>
                 </section>
-
-                <section>
-                    <h1>Практическая часть*</h1>                                        
-                    <ul>
-                        <li>Открыть heapdump</li>
-                        <li>Указать видимые проблемы</li>
-                    </ul>
-                </section>
-
             </div>
         </div>
 
